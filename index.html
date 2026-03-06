@@ -40,7 +40,6 @@ Crucial Rules:
 4. Do not write paragraphs or walls of text. 
 5. Only include information strictly required by the specified syllabus.`;
 
-// Extracted 3D math logic for cleaner component rendering
 const getFaceTransform = (shape, index, isUnfolded) => {
   if (isUnfolded) {
     if (shape === 'prism') {
@@ -48,12 +47,12 @@ const getFaceTransform = (shape, index, isUnfolded) => {
       return `${offsets[index]} translateZ(0px) rotateY(0deg)`;
     } else {
       const offsets = [
-        'translateX(-160px) translateY(0px)',     // Front
-        'translateX(160px) translateY(0px)',      // Right
-        'translateX(480px) translateY(0px)',      // Back
-        'translateX(-480px) translateY(0px)',     // Left
-        'translateX(-160px) translateY(-320px)',  // Top
-        'translateX(-160px) translateY(320px)'    // Bottom
+        'translateX(-160px) translateY(0px)',     
+        'translateX(160px) translateY(0px)',      
+        'translateX(480px) translateY(0px)',      
+        'translateX(-480px) translateY(0px)',     
+        'translateX(-160px) translateY(-320px)',  
+        'translateX(-160px) translateY(320px)'    
       ];
       return `${offsets[index]} translateZ(0px) rotateY(0deg) rotateX(0deg)`;
     }
@@ -62,12 +61,12 @@ const getFaceTransform = (shape, index, isUnfolded) => {
       return `rotateY(${index * 120}deg) translateZ(87px)`;
     } else {
       const transforms = [
-        'rotateY(0deg) translateZ(150px)',     // Front
-        'rotateY(90deg) translateZ(150px)',    // Right
-        'rotateY(180deg) translateZ(150px)',   // Back
-        'rotateY(-90deg) translateZ(150px)',   // Left
-        'rotateX(90deg) translateZ(150px)',    // Top
-        'rotateX(-90deg) translateZ(150px)'    // Bottom
+        'rotateY(0deg) translateZ(150px)',     
+        'rotateY(90deg) translateZ(150px)',    
+        'rotateY(180deg) translateZ(150px)',   
+        'rotateY(-90deg) translateZ(150px)',   
+        'rotateX(90deg) translateZ(150px)',    
+        'rotateX(-90deg) translateZ(150px)'    
       ];
       return transforms[index];
     }
@@ -75,9 +74,19 @@ const getFaceTransform = (shape, index, isUnfolded) => {
 };
 
 export default function App() {
+  // EMERGENCY FIX: Auto-inject Tailwind CSS if the GitHub repo is missing it.
+  // This solves the "just writing/no styling" issue.
+  useEffect(() => {
+    if (!document.getElementById('tailwind-css-injection')) {
+      const script = document.createElement('script');
+      script.id = 'tailwind-css-injection';
+      script.src = 'https://cdn.tailwindcss.com';
+      document.head.appendChild(script);
+    }
+  }, []);
+
   const [mode, setMode] = useState('view');
   
-  // Safe initialization from localStorage
   const [shape, setShape] = useState(() => {
     try { return localStorage.getItem('concept3d-shape') || 'prism'; } 
     catch { return 'prism'; }
@@ -103,7 +112,6 @@ export default function App() {
 
   const activeFaces = shape === 'prism' ? faces.slice(0, 3) : faces;
 
-  // Safe Saving to localStorage
   useEffect(() => {
     try {
       localStorage.setItem('concept3d-shape', shape);
@@ -113,7 +121,6 @@ export default function App() {
     }
   }, [shape, faces]);
 
-  // Robust Drag Handlers (Replaced Pointer events to fix mobile/Safari issues)
   const handleDragStart = (clientX, clientY) => {
     if (mode === 'edit' || isUnfolded) return;
     setIsDragging(true);
@@ -173,12 +180,12 @@ export default function App() {
       setRotation({ x: 0, y: angles[index] });
     } else {
       const angles = [
-        { x: 0, y: 0 },       // Front
-        { x: 0, y: -90 },     // Right
-        { x: 0, y: -180 },    // Back
-        { x: 0, y: 90 },      // Left
-        { x: -90, y: 0 },     // Top
-        { x: 90, y: 0 }       // Bottom
+        { x: 0, y: 0 },       
+        { x: 0, y: -90 },     
+        { x: 0, y: -180 },    
+        { x: 0, y: 90 },      
+        { x: -90, y: 0 },     
+        { x: 90, y: 0 }       
       ];
       setRotation(angles[index]);
     }
@@ -187,7 +194,6 @@ export default function App() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-100 via-indigo-50/50 to-purple-50/50 font-sans flex flex-col selection:bg-purple-200">
       
-      {/* Header / Toolbar */}
       <header className="bg-white/80 backdrop-blur-md shadow-sm border-b border-white/50 p-4 flex flex-wrap gap-4 items-center justify-between z-10">
         <div>
           <h1 className="text-2xl font-extrabold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">3D Concept Visualizer</h1>
@@ -236,10 +242,8 @@ export default function App() {
         </div>
       </header>
 
-      {/* Main Workspace */}
       <main className="flex-1 flex flex-col lg:flex-row overflow-hidden">
         
-        {/* 3D Viewer Area */}
         <div className="flex-1 relative flex flex-col">
           {mode === 'view' && (
              <div className="absolute top-6 left-0 right-0 text-center pointer-events-none z-10">
@@ -258,10 +262,10 @@ export default function App() {
             onTouchStart={(e) => handleDragStart(e.touches[0].clientX, e.touches[0].clientY)}
             onTouchMove={(e) => handleDragMove(e.touches[0].clientX, e.touches[0].clientY)}
             onTouchEnd={handleDragEnd}
-            style={{ perspective: '1200px' }}
+            style={{ perspective: '1200px', WebkitPerspective: '1200px' }}
           >
             <div 
-              className={`relative ${!isDragging ? 'transition-all duration-700 ease-in-out' : ''}`}
+              className={`relative ${!isDragging ? 'transition-transform duration-700 ease-in-out' : ''}`}
               style={{
                 width: '300px',
                 height: '300px',
@@ -290,7 +294,6 @@ export default function App() {
                       transform,
                       backfaceVisibility: isUnfolded ? 'visible' : 'hidden', 
                       WebkitBackfaceVisibility: isUnfolded ? 'visible' : 'hidden',
-                      opacity: mode === 'edit' ? 0.4 : 1 
                     }}
                   >
                     <h2 className="text-xl font-extrabold mb-4 border-b-2 border-current/20 pb-2 flex justify-between items-center">
@@ -313,11 +316,8 @@ export default function App() {
             </div>
           </div>
 
-          {/* Quick Navigation Panel for View Mode */}
           {mode === 'view' && (
             <div className="p-6 flex flex-col gap-4 items-center border-t border-slate-200/50 bg-white/30 backdrop-blur-sm z-10">
-              
-              {/* Learning Tools */}
               <div className="flex flex-wrap justify-center gap-3">
                 <button
                   onClick={() => { setIsQuizMode(!isQuizMode); setRevealedFaces([]); }}
@@ -333,7 +333,6 @@ export default function App() {
                 </button>
               </div>
 
-              {/* Focus Controls - Hide when unfolded */}
               {!isUnfolded && (
                 <div className="flex gap-3 overflow-x-auto justify-center max-w-full pb-2 pt-2">
                   {activeFaces.map((face, idx) => (
@@ -357,7 +356,6 @@ export default function App() {
           )}
         </div>
 
-        {/* Edit Panel */}
         {mode === 'edit' && (
           <div className="w-full lg:w-[400px] bg-white/80 backdrop-blur-xl border-l border-white/50 shadow-[-10px_0_30px_rgba(0,0,0,0.03)] flex flex-col h-[50vh] lg:h-auto overflow-hidden z-20">
             <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-white/50">
@@ -407,7 +405,6 @@ export default function App() {
         )}
       </main>
 
-      {/* AI Prompt Modal */}
       {showPrompt && (
         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
