@@ -113,36 +113,29 @@ export default function App() {
     }
   }, [shape, faces]);
 
-  // Unified Pointer Events (Handles both Mouse and Touch optimally)
-  const handlePointerDown = (e) => {
+  // Robust Drag Handlers (Replaced Pointer events to fix mobile/Safari issues)
+  const handleDragStart = (clientX, clientY) => {
     if (mode === 'edit' || isUnfolded) return;
     setIsDragging(true);
     setHasDragged(false);
-    dragStart.current = { x: e.clientX, y: e.clientY };
-    // Prevent default to stop text selection while dragging
-    e.preventDefault(); 
+    dragStart.current = { x: clientX, y: clientY };
   };
 
-  const handlePointerMove = (e) => {
+  const handleDragMove = (clientX, clientY) => {
     if (!isDragging || mode === 'edit' || isUnfolded) return;
     setHasDragged(true);
-    const deltaX = e.clientX - dragStart.current.x;
-    const deltaY = e.clientY - dragStart.current.y;
+    const deltaX = clientX - dragStart.current.x;
+    const deltaY = clientY - dragStart.current.y;
     
     setRotation(prev => ({
       x: prev.x - deltaY * 0.5,
       y: prev.y + deltaX * 0.5
     }));
     
-    dragStart.current = { x: e.clientX, y: e.clientY };
+    dragStart.current = { x: clientX, y: clientY };
   };
 
-  const handlePointerUp = () => setIsDragging(false);
-
-  useEffect(() => {
-    window.addEventListener('pointerup', handlePointerUp);
-    return () => window.removeEventListener('pointerup', handlePointerUp);
-  }, []);
+  const handleDragEnd = () => setIsDragging(false);
 
   const handleFaceChange = (id, field, value) => {
     setFaces(faces.map(f => f.id === id ? { ...f, [field]: value } : f));
@@ -257,9 +250,14 @@ export default function App() {
           )}
 
           <div 
-            className="flex-1 flex items-center justify-center overflow-hidden touch-none"
-            onPointerDown={handlePointerDown}
-            onPointerMove={handlePointerMove}
+            className="flex-1 flex items-center justify-center overflow-hidden touch-none select-none"
+            onMouseDown={(e) => handleDragStart(e.clientX, e.clientY)}
+            onMouseMove={(e) => handleDragMove(e.clientX, e.clientY)}
+            onMouseUp={handleDragEnd}
+            onMouseLeave={handleDragEnd}
+            onTouchStart={(e) => handleDragStart(e.touches[0].clientX, e.touches[0].clientY)}
+            onTouchMove={(e) => handleDragMove(e.touches[0].clientX, e.touches[0].clientY)}
+            onTouchEnd={handleDragEnd}
             style={{ perspective: '1200px' }}
           >
             <div 
@@ -268,7 +266,7 @@ export default function App() {
                 width: '300px',
                 height: '300px',
                 transformStyle: 'preserve-3d',
-                willChange: 'transform',
+                WebkitTransformStyle: 'preserve-3d',
                 transform: isUnfolded 
                   ? `scale(${shape === 'cube' ? 0.35 : 0.55}) translateZ(-150px) rotateX(0deg) rotateY(0deg)` 
                   : `rotateX(${rotation.x}deg) rotateY(${rotation.y}deg)`,
@@ -287,10 +285,11 @@ export default function App() {
                         setRevealedFaces(prev => prev.includes(face.id) ? prev.filter(id => id !== face.id) : [...prev, face.id]);
                       }
                     }}
-                    className={`absolute w-full h-full border-[3px] border-white/60 rounded-2xl p-6 flex flex-col shadow-[0_20px_50px_rgba(8,_112,_184,_0.15)] backdrop-blur-xl overflow-hidden ${PALETTE[face.color]} ${isQuizMode ? 'cursor-pointer hover:border-indigo-400' : ''} ${!isDragging ? 'transition-all duration-700' : ''} ${isDragging ? 'pointer-events-none select-none' : ''}`}
+                    className={`absolute w-full h-full border-[3px] border-white/60 rounded-2xl p-6 flex flex-col shadow-[0_20px_50px_rgba(8,_112,_184,_0.15)] backdrop-blur-xl overflow-hidden ${PALETTE[face.color]} ${isQuizMode ? 'cursor-pointer hover:border-indigo-400' : ''} ${!isDragging ? 'transition-all duration-700' : ''} ${isDragging ? 'pointer-events-none' : ''}`}
                     style={{
                       transform,
                       backfaceVisibility: isUnfolded ? 'visible' : 'hidden', 
+                      WebkitBackfaceVisibility: isUnfolded ? 'visible' : 'hidden',
                       opacity: mode === 'edit' ? 0.4 : 1 
                     }}
                   >
