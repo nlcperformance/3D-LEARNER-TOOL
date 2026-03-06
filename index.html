@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Edit3, Eye, RotateCcw, Box, Triangle, Maximize, Sparkles, X, Copy, Check, Trash2, BrainCircuit, Map } from 'lucide-react';
+import { Edit3, Eye, RotateCcw, Box, Triangle, Sparkles, X, Copy, Check, Trash2, BrainCircuit, Map } from 'lucide-react';
 
 const PALETTE = [
   'bg-blue-100 border-blue-300 text-slate-800',
@@ -40,76 +40,108 @@ Crucial Rules:
 4. Do not write paragraphs or walls of text. 
 5. Only include information strictly required by the specified syllabus.`;
 
+// Extracted 3D math logic for cleaner component rendering
+const getFaceTransform = (shape, index, isUnfolded) => {
+  if (isUnfolded) {
+    if (shape === 'prism') {
+      const offsets = ['translateX(-320px)', 'translateX(0px)', 'translateX(320px)'];
+      return `${offsets[index]} translateZ(0px) rotateY(0deg)`;
+    } else {
+      const offsets = [
+        'translateX(-160px) translateY(0px)',     // Front
+        'translateX(160px) translateY(0px)',      // Right
+        'translateX(480px) translateY(0px)',      // Back
+        'translateX(-480px) translateY(0px)',     // Left
+        'translateX(-160px) translateY(-320px)',  // Top
+        'translateX(-160px) translateY(320px)'    // Bottom
+      ];
+      return `${offsets[index]} translateZ(0px) rotateY(0deg) rotateX(0deg)`;
+    }
+  } else {
+    if (shape === 'prism') {
+      return `rotateY(${index * 120}deg) translateZ(87px)`;
+    } else {
+      const transforms = [
+        'rotateY(0deg) translateZ(150px)',     // Front
+        'rotateY(90deg) translateZ(150px)',    // Right
+        'rotateY(180deg) translateZ(150px)',   // Back
+        'rotateY(-90deg) translateZ(150px)',   // Left
+        'rotateX(90deg) translateZ(150px)',    // Top
+        'rotateX(-90deg) translateZ(150px)'    // Bottom
+      ];
+      return transforms[index];
+    }
+  }
+};
+
 export default function App() {
-  const [mode, setMode] = useState('view'); // 'view' or 'edit'
-  const [shape, setShape] = useState(() => {
-    const saved = localStorage.getItem('concept3d-shape');
-    return saved || 'prism';
-  }); // 'prism' (3 sides) or 'cube' (6 sides)
+  const [mode, setMode] = useState('view');
   
-  // Rotation state
+  // Safe initialization from localStorage
+  const [shape, setShape] = useState(() => {
+    try { return localStorage.getItem('concept3d-shape') || 'prism'; } 
+    catch { return 'prism'; }
+  });
+  
+  const [faces, setFaces] = useState(() => {
+    try { 
+      const saved = localStorage.getItem('concept3d-faces');
+      return saved ? JSON.parse(saved) : DEFAULT_FACES;
+    } catch { return DEFAULT_FACES; }
+  });
+
   const [rotation, setRotation] = useState({ x: -15, y: -25 });
   const [isDragging, setIsDragging] = useState(false);
   const dragStart = useRef({ x: 0, y: 0 });
-  
-  // Content state
-  const [faces, setFaces] = useState(() => {
-    const saved = localStorage.getItem('concept3d-faces');
-    return saved ? JSON.parse(saved) : DEFAULT_FACES;
-  });
+  const [hasDragged, setHasDragged] = useState(false);
 
-  // Learning Tools State
   const [isQuizMode, setIsQuizMode] = useState(false);
   const [revealedFaces, setRevealedFaces] = useState([]);
   const [isUnfolded, setIsUnfolded] = useState(false);
-  const [hasDragged, setHasDragged] = useState(false);
-
-  // Prompt Modal State
   const [showPrompt, setShowPrompt] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  // Save to localStorage whenever faces or shape change
-  useEffect(() => {
-    localStorage.setItem('concept3d-shape', shape);
-    localStorage.setItem('concept3d-faces', JSON.stringify(faces));
-  }, [shape, faces]);
-
   const activeFaces = shape === 'prism' ? faces.slice(0, 3) : faces;
 
-  // Touch/Mouse Dragging Logic
+  // Safe Saving to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem('concept3d-shape', shape);
+      localStorage.setItem('concept3d-faces', JSON.stringify(faces));
+    } catch (error) {
+      console.warn('Local storage is not available.');
+    }
+  }, [shape, faces]);
+
+  // Unified Pointer Events (Handles both Mouse and Touch optimally)
   const handlePointerDown = (e) => {
     if (mode === 'edit' || isUnfolded) return;
     setIsDragging(true);
     setHasDragged(false);
-    dragStart.current = { x: e.clientX || e.touches?.[0].clientX, y: e.clientY || e.touches?.[0].clientY };
+    dragStart.current = { x: e.clientX, y: e.clientY };
+    // Prevent default to stop text selection while dragging
+    e.preventDefault(); 
   };
 
   const handlePointerMove = (e) => {
     if (!isDragging || mode === 'edit' || isUnfolded) return;
     setHasDragged(true);
-    const clientX = e.clientX || e.touches?.[0].clientX;
-    const clientY = e.clientY || e.touches?.[0].clientY;
-    
-    const deltaX = clientX - dragStart.current.x;
-    const deltaY = clientY - dragStart.current.y;
+    const deltaX = e.clientX - dragStart.current.x;
+    const deltaY = e.clientY - dragStart.current.y;
     
     setRotation(prev => ({
       x: prev.x - deltaY * 0.5,
       y: prev.y + deltaX * 0.5
     }));
     
-    dragStart.current = { x: clientX, y: clientY };
+    dragStart.current = { x: e.clientX, y: e.clientY };
   };
 
   const handlePointerUp = () => setIsDragging(false);
 
   useEffect(() => {
-    document.addEventListener('mouseup', handlePointerUp);
-    document.addEventListener('touchend', handlePointerUp);
-    return () => {
-      document.removeEventListener('mouseup', handlePointerUp);
-      document.removeEventListener('touchend', handlePointerUp);
-    };
+    window.addEventListener('pointerup', handlePointerUp);
+    return () => window.removeEventListener('pointerup', handlePointerUp);
   }, []);
 
   const handleFaceChange = (id, field, value) => {
@@ -142,7 +174,6 @@ export default function App() {
     document.body.removeChild(textArea);
   };
 
-  // Helper to jump to a specific face
   const snapToFace = (index) => {
     if (shape === 'prism') {
       const angles = [0, -120, -240];
@@ -162,6 +193,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-100 via-indigo-50/50 to-purple-50/50 font-sans flex flex-col selection:bg-purple-200">
+      
       {/* Header / Toolbar */}
       <header className="bg-white/80 backdrop-blur-md shadow-sm border-b border-white/50 p-4 flex flex-wrap gap-4 items-center justify-between z-10">
         <div>
@@ -176,6 +208,23 @@ export default function App() {
           >
             <Sparkles size={18} /> AI Prompt Guide
           </button>
+
+          <div className="flex bg-slate-200/50 p-1.5 rounded-xl backdrop-blur-sm">
+            <button 
+              onClick={() => setShape('prism')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${shape === 'prism' ? 'bg-white shadow-md text-indigo-600 scale-100' : 'text-slate-500 hover:text-slate-700 hover:bg-white/50'}`}
+              aria-label="Switch to 3-sided Prism shape"
+            >
+              <Triangle size={16} /> 3-Sided
+            </button>
+            <button 
+              onClick={() => setShape('cube')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${shape === 'cube' ? 'bg-white shadow-md text-indigo-600 scale-100' : 'text-slate-500 hover:text-slate-700 hover:bg-white/50'}`}
+              aria-label="Switch to 6-sided Cube shape"
+            >
+              <Box size={16} /> 6-Sided
+            </button>
+          </div>
 
           <div className="flex bg-slate-200/50 p-1.5 rounded-xl backdrop-blur-sm">
             <button 
@@ -209,10 +258,8 @@ export default function App() {
 
           <div 
             className="flex-1 flex items-center justify-center overflow-hidden touch-none"
-            onMouseDown={handlePointerDown}
-            onMouseMove={handlePointerMove}
-            onTouchStart={handlePointerDown}
-            onTouchMove={handlePointerMove}
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
             style={{ perspective: '1200px' }}
           >
             <div 
@@ -229,42 +276,7 @@ export default function App() {
               }}
             >
               {activeFaces.map((face, index) => {
-                // Calculate transforms based on shape
-                let transform = '';
-                if (isUnfolded) {
-                  if (shape === 'prism') {
-                    // Lay out 3 sides side-by-side
-                    const offsets = ['translateX(-320px)', 'translateX(0px)', 'translateX(320px)'];
-                    transform = `${offsets[index]} translateZ(0px) rotateY(0deg)`;
-                  } else {
-                    // Lay out cube in a cross net, centered
-                    const offsets = [
-                      'translateX(-160px) translateY(0px)',     // Front
-                      'translateX(160px) translateY(0px)',      // Right
-                      'translateX(480px) translateY(0px)',      // Back
-                      'translateX(-480px) translateY(0px)',     // Left
-                      'translateX(-160px) translateY(-320px)',  // Top
-                      'translateX(-160px) translateY(320px)'    // Bottom
-                    ];
-                    transform = `${offsets[index]} translateZ(0px) rotateY(0deg) rotateX(0deg)`;
-                  }
-                } else {
-                  if (shape === 'prism') {
-                    const angle = index * 120;
-                    transform = `rotateY(${angle}deg) translateZ(87px)`;
-                  } else {
-                    const transforms = [
-                      'rotateY(0deg) translateZ(150px)',     // Front
-                      'rotateY(90deg) translateZ(150px)',    // Right
-                      'rotateY(180deg) translateZ(150px)',   // Back
-                      'rotateY(-90deg) translateZ(150px)',   // Left
-                      'rotateX(90deg) translateZ(150px)',    // Top
-                      'rotateX(-90deg) translateZ(150px)'    // Bottom
-                    ];
-                    transform = transforms[index];
-                  }
-                }
-
+                const transform = getFaceTransform(shape, index, isUnfolded);
                 const isHidden = isQuizMode && !revealedFaces.includes(face.id);
 
                 return (
@@ -357,6 +369,7 @@ export default function App() {
               <button 
                 onClick={resetToDefaults}
                 className="text-xs flex items-center gap-1.5 px-3 py-1.5 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 font-bold transition-colors"
+                title="Reset all fields to default"
               >
                 <Trash2 size={14} /> Reset
               </button>
@@ -365,7 +378,6 @@ export default function App() {
             <div className="flex-1 overflow-y-auto p-5 space-y-6 custom-scrollbar">
               {activeFaces.map((face, index) => (
                 <div key={face.id} className="bg-white border-2 border-slate-100 rounded-2xl p-5 space-y-4 shadow-sm relative overflow-hidden">
-                  {/* Subtle color hint on the side of the edit box */}
                   <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${PALETTE[face.color].split(' ')[0]}`}></div>
                   
                   <div className="flex items-center justify-between pl-2">
@@ -394,7 +406,6 @@ export default function App() {
             </div>
           </div>
         )}
-
       </main>
 
       {/* AI Prompt Modal */}
