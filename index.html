@@ -250,7 +250,7 @@ export default function App() {
           )}
 
           <div 
-            className="flex-1 flex items-center justify-center overflow-hidden touch-none select-none"
+            className="flex-1 flex items-center justify-center touch-none select-none"
             onMouseDown={(e) => handleDragStart(e.clientX, e.clientY)}
             onMouseMove={(e) => handleDragMove(e.clientX, e.clientY)}
             onMouseUp={handleDragEnd}
@@ -285,7 +285,7 @@ export default function App() {
                         setRevealedFaces(prev => prev.includes(face.id) ? prev.filter(id => id !== face.id) : [...prev, face.id]);
                       }
                     }}
-                    className={`absolute w-full h-full border-[3px] border-white/60 rounded-2xl p-6 flex flex-col shadow-[0_20px_50px_rgba(8,_112,_184,_0.15)] backdrop-blur-xl overflow-hidden ${PALETTE[face.color]} ${isQuizMode ? 'cursor-pointer hover:border-indigo-400' : ''} ${!isDragging ? 'transition-all duration-700' : ''} ${isDragging ? 'pointer-events-none' : ''}`}
+                    className={`absolute w-full h-full border-[3px] border-white rounded-2xl p-6 flex flex-col shadow-[0_20px_50px_rgba(8,_112,_184,_0.15)] overflow-hidden ${PALETTE[face.color]} ${isQuizMode ? 'cursor-pointer hover:border-indigo-400' : ''} ${!isDragging ? 'transition-all duration-700' : ''} ${isDragging ? 'pointer-events-none' : ''}`}
                     style={{
                       transform,
                       backfaceVisibility: isUnfolded ? 'visible' : 'hidden', 
