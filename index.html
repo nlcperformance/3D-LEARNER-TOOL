@@ -45,12 +45,12 @@
         ];
 
         const DEFAULT_FACES = [
-          { id: 1, title: 'ATP-PC System', content: '• Alactic / Phosphagen system\n• 0 - 10 seconds of explosive activity\n• E.g., 100m sprint, 1RM weightlift\n• Uses stored ATP and Phosphocreatine\n• No oxygen required (Anaerobic)', color: 0 },
-          { id: 2, title: 'Lactic Acid System', content: '• Anaerobic Glycolysis\n• 10 seconds to 3 minutes of high intensity\n• E.g., 400m sprint, fast rally in tennis\n• Breaks down carbohydrates (glycogen)\n• Produces lactic acid as a byproduct', color: 1 },
-          { id: 3, title: 'Aerobic System', content: '• Oxygen dependent\n• 3+ minutes of sustained, lower intensity\n• E.g., Marathon running, cycling\n• Breaks down carbs, fats, and sometimes proteins\n• Produces no fatiguing byproducts (water & CO2)', color: 2 },
-          { id: 4, title: 'Energy Continuum', content: 'All systems work together at all times.\n\nThe dominant system depends on:\n1. Intensity of the exercise\n2. Duration of the exercise', color: 3 },
-          { id: 5, title: 'Recovery (EPOC)', content: 'Excess Post-exercise Oxygen Consumption.\n\nAfter exercise, the body breathes heavily to take in extra oxygen to repay the oxygen debt and restore ATP-PC stores.', color: 4 },
-          { id: 6, title: 'Muscle Fiber Types', content: '• Type I (Slow Twitch): Aerobic, fatigue resistant.\n• Type IIa (Fast Oxidative): Hybrid.\n• Type IIx (Fast Glycolytic): ATP-PC/Lactic, highly explosive, fatigues quickly.', color: 5 },
+          { id: 1, icon: '⚡', title: 'ATP-PC System', content: '• Alactic / Phosphagen system\n• 0 - 10 seconds of explosive activity\n• E.g., 100m sprint, 1RM weightlift\n• Uses stored ATP and Phosphocreatine\n• No oxygen required (Anaerobic)', color: 0 },
+          { id: 2, icon: '🏃', title: 'Lactic Acid System', content: '• Anaerobic Glycolysis\n• 10 seconds to 3 minutes of high intensity\n• E.g., 400m sprint, fast rally in tennis\n• Breaks down carbohydrates (glycogen)\n• Produces lactic acid as a byproduct', color: 1 },
+          { id: 3, icon: '🫁', title: 'Aerobic System', content: '• Oxygen dependent\n• 3+ minutes of sustained, lower intensity\n• E.g., Marathon running, cycling\n• Breaks down carbs, fats, and sometimes proteins\n• Produces no fatiguing byproducts (water & CO2)', color: 2 },
+          { id: 4, icon: '🔄', title: 'Energy Continuum', content: 'All systems work together at all times.\n\nThe dominant system depends on:\n1. Intensity of the exercise\n2. Duration of the exercise', color: 3 },
+          { id: 5, icon: '🔋', title: 'Recovery (EPOC)', content: 'Excess Post-exercise Oxygen Consumption.\n\nAfter exercise, the body breathes heavily to take in extra oxygen to repay the oxygen debt and restore ATP-PC stores.', color: 4 },
+          { id: 6, icon: '💪', title: 'Muscle Fiber Types', content: '• Type I (Slow Twitch): Aerobic, fatigue resistant.\n• Type IIa (Fast Oxidative): Hybrid.\n• Type IIx (Fast Glycolytic): ATP-PC/Lactic, highly explosive, fatigues quickly.', color: 5 },
         ];
 
         const PROMPT_TEXT = `Act as an expert Anatomy & Physiology tutor for the [OCR A Level PE / Pearson BTEC Sport Level 3] syllabus.
@@ -60,7 +60,7 @@ Because these sides physically connect in 3D and can unfold into a flat 2D map, 
 
 Please provide the content formatted exactly like this:
 
-Side 1: [Short Title]
+Side 1: [Single Emoji that visually represents the topic] [Short Title]
 • [Very short bullet point, max 10 words]
 • [Very short bullet point]
 • [Relationship: e.g., "Leads to anaerobic glycolysis..."]
@@ -72,7 +72,8 @@ Crucial Rules:
 2. Strictly limit to 3-5 bullet points per side.
 3. Emphasize how one side connects to or causes the next.
 4. Do not write paragraphs or walls of text. 
-5. Only include information strictly required by the specified syllabus.`;
+5. Only include information strictly required by the specified syllabus.
+6. MANDATORY: You must include exactly ONE highly relevant emoji at the start of every title to act as a visual memory anchor (Dual Coding).`;
 
         const getFaceTransform = (shape, index, isUnfolded) => {
           if (isUnfolded) {
@@ -319,15 +320,21 @@ Crucial Rules:
                               WebkitBackfaceVisibility: isUnfolded ? 'visible' : 'hidden',
                             }}
                           >
-                            <h2 className="text-xl font-extrabold mb-4 border-b-2 border-current/20 pb-2 flex justify-between items-center">
-                              {face.title}
-                              {isHidden && <BrainCircuit size={20} className="animate-pulse opacity-50 text-indigo-600" />}
-                            </h2>
-                            <div className={`whitespace-pre-wrap text-[1.05rem] font-medium leading-relaxed overflow-y-auto pr-2 custom-scrollbar text-slate-700 transition-all duration-300 ${isHidden ? 'blur-md opacity-20 select-none' : 'blur-0 opacity-100'}`}>
-                              {face.content}
+                            <div className={`transition-all duration-500 flex flex-col flex-1 ${isHidden ? 'blur-xl opacity-0 select-none' : 'blur-0 opacity-100'}`}>
+                              <h2 className="text-xl font-extrabold mb-4 border-b-2 border-current/20 pb-2 flex items-center gap-3">
+                                <span className="text-3xl bg-white/50 p-1.5 rounded-lg shadow-sm leading-none">{face.icon || '✨'}</span>
+                                {face.title}
+                              </h2>
+                              <div className="whitespace-pre-wrap text-[1.05rem] font-medium leading-relaxed overflow-y-auto pr-2 custom-scrollbar text-slate-700">
+                                {face.content}
+                              </div>
                             </div>
+
                             {isHidden && (
-                              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-10">
+                                <span className="text-8xl drop-shadow-xl mb-6 transform transition-transform duration-500 hover:scale-110">
+                                  {face.icon || '❓'}
+                                </span>
                                 <span className="bg-white/95 text-indigo-700 font-extrabold px-6 py-3 rounded-full shadow-lg border-2 border-indigo-100 backdrop-blur-sm animate-bounce">
                                   Tap to Reveal
                                 </span>
@@ -406,13 +413,23 @@ Crucial Rules:
                             </label>
                           </div>
                           
-                          <input
-                            type="text"
-                            value={face.title}
-                            onChange={(e) => handleFaceChange(face.id, 'title', e.target.value)}
-                            placeholder="Enter Title..."
-                            className="w-full font-bold text-lg p-3 bg-slate-50 border-2 border-transparent rounded-xl focus:bg-white focus:border-indigo-300 focus:ring-4 focus:ring-indigo-100 outline-none transition-all text-slate-800 placeholder:text-slate-300"
-                          />
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="text"
+                              value={face.icon || ''}
+                              onChange={(e) => handleFaceChange(face.id, 'icon', e.target.value)}
+                              placeholder="🎨"
+                              title="Set an emoji or icon for this side"
+                              className="w-16 font-bold text-2xl p-2 text-center bg-slate-50 border-2 border-transparent rounded-xl focus:bg-white focus:border-indigo-300 focus:ring-4 focus:ring-indigo-100 outline-none transition-all"
+                            />
+                            <input
+                              type="text"
+                              value={face.title}
+                              onChange={(e) => handleFaceChange(face.id, 'title', e.target.value)}
+                              placeholder="Enter Title..."
+                              className="flex-1 font-bold text-lg p-3 bg-slate-50 border-2 border-transparent rounded-xl focus:bg-white focus:border-indigo-300 focus:ring-4 focus:ring-indigo-100 outline-none transition-all text-slate-800 placeholder:text-slate-300"
+                            />
+                          </div>
                           
                           <textarea
                             value={face.content}
