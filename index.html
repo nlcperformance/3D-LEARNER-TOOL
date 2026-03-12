@@ -53,28 +53,6 @@
           { id: 6, icon: '💪', title: 'Muscle Fiber Types', content: '• Type I (Slow Twitch): Aerobic, fatigue resistant.\n• Type IIa (Fast Oxidative): Hybrid.\n• Type IIx (Fast Glycolytic): ATP-PC/Lactic, highly explosive, fatigues quickly.', color: 5 },
         ];
 
-        const PROMPT_TEXT = `Act as an expert Anatomy & Physiology tutor for the [OCR A Level PE / Pearson BTEC Sport Level 3] syllabus.
-I am a dyslexic student using a 3D visualization tool to revise. I need to break down the topic of [Insert Topic] into exactly [3 or 6] distinct sides of a 3D shape.
-
-Because these sides physically connect in 3D and can unfold into a flat 2D map, structure the content so there is a logical flow or inter-relationship from Side 1 through to the final side.
-
-Please provide the content formatted exactly like this:
-
-Side 1: [Single Emoji that visually represents the topic] [Short Title]
-• [Very short bullet point, max 10 words]
-• [Very short bullet point]
-• [Relationship: e.g., "Leads to anaerobic glycolysis..."]
-
-(Continue for all sides requested)
-
-Crucial Rules:
-1. Use simple, plain English. 
-2. Strictly limit to 3-5 bullet points per side.
-3. Emphasize how one side connects to or causes the next.
-4. Do not write paragraphs or walls of text. 
-5. Only include information strictly required by the specified syllabus.
-6. MANDATORY: You must include exactly ONE highly relevant emoji at the start of every title to act as a visual memory anchor (Dual Coding).`;
-
         const getFaceTransform = (shape, index, isUnfolded) => {
           if (isUnfolded) {
             if (shape === 'prism') {
@@ -134,7 +112,35 @@ Crucial Rules:
           const [showPrompt, setShowPrompt] = useState(false);
           const [copied, setCopied] = useState(false);
 
+          // New State for Dynamic AI Prompt Builder
+          const [promptTopic, setPromptTopic] = useState('');
+          const [promptCourse, setPromptCourse] = useState('OCR A Level PE');
+
           const activeFaces = shape === 'prism' ? faces.slice(0, 3) : faces;
+          const sidesCount = shape === 'prism' ? 3 : 6;
+
+          // Dynamically generating the prompt so the student doesn't have to fill in brackets
+          const dynamicPrompt = `Act as an expert Anatomy & Physiology tutor for the ${promptCourse} syllabus.
+I am a dyslexic student using a 3D visualization tool to revise. I need to break down the topic of "${promptTopic || '[Your Topic]'}" into exactly ${sidesCount} distinct sides of a 3D shape.
+
+Because these sides physically connect in 3D and can unfold into a flat 2D map, structure the content so there is a logical flow or inter-relationship from Side 1 through to the final side.
+
+Please provide the content formatted exactly like this:
+
+Side 1: [Single Emoji that visually represents the topic] [Short Title]
+• [Very short bullet point, max 10 words]
+• [Very short bullet point]
+• [Relationship: e.g., "Leads to anaerobic glycolysis..."]
+
+(Continue for all ${sidesCount} sides requested)
+
+Crucial Rules:
+1. Use simple, plain English. 
+2. Strictly limit to 3-5 bullet points per side.
+3. Emphasize how one side connects to or causes the next.
+4. Do not write paragraphs or walls of text. 
+5. Only include information strictly required by the specified syllabus.
+6. MANDATORY: You must include exactly ONE highly relevant emoji at the start of every title to act as a visual memory anchor (Dual Coding).`;
 
           useEffect(() => {
             try {
@@ -185,7 +191,7 @@ Crucial Rules:
 
           const copyToClipboard = () => {
             const textArea = document.createElement("textarea");
-            textArea.value = PROMPT_TEXT;
+            textArea.value = dynamicPrompt;
             document.body.appendChild(textArea);
             textArea.select();
             try {
@@ -320,12 +326,12 @@ Crucial Rules:
                               WebkitBackfaceVisibility: isUnfolded ? 'visible' : 'hidden',
                             }}
                           >
-                            <div className={`transition-all duration-500 flex flex-col flex-1 ${isHidden ? 'blur-xl opacity-0 select-none' : 'blur-0 opacity-100'}`}>
-                              <h2 className="text-xl font-extrabold mb-4 border-b-2 border-current/20 pb-2 flex items-center gap-3">
+                            <div className={`transition-all duration-500 flex flex-col flex-1 min-h-0 ${isHidden ? 'blur-xl opacity-0 select-none' : 'blur-0 opacity-100'}`}>
+                              <h2 className="text-xl font-extrabold mb-4 border-b-2 border-current/20 pb-2 flex items-center gap-3 shrink-0">
                                 <span className="text-3xl bg-white/50 p-1.5 rounded-lg shadow-sm leading-none">{face.icon || '✨'}</span>
                                 {face.title}
                               </h2>
-                              <div className="whitespace-pre-wrap text-[1.05rem] font-medium leading-relaxed overflow-y-auto pr-2 custom-scrollbar text-slate-700">
+                              <div className="whitespace-pre-wrap text-[1.05rem] font-medium leading-relaxed overflow-y-auto pr-2 custom-scrollbar text-slate-700 flex-1 min-h-0">
                                 {face.content}
                               </div>
                             </div>
@@ -457,17 +463,48 @@ Crucial Rules:
                         <X size={20} />
                       </button>
                     </div>
-                    <div className="p-6 overflow-y-auto">
-                      <p className="text-sm text-slate-600 mb-4">
-                        Copy and paste this prompt into ChatGPT, Claude, or Gemini. Fill in the bracketed info to generate perfect, dyslexia-friendly notes for this 3D shape.
+                    <div className="p-6 overflow-y-auto flex flex-col gap-4">
+                      <p className="text-sm text-slate-600">
+                        Fill in the details below. We will automatically write the perfect prompt for you to copy and paste into ChatGPT or Claude!
                       </p>
+                      
+                      <div className="bg-purple-50 p-4 rounded-xl border border-purple-100 space-y-4">
+                        <div>
+                          <label className="block text-sm font-extrabold text-purple-900 mb-1">1. What course are you taking?</label>
+                          <select 
+                            value={promptCourse}
+                            onChange={(e) => setPromptCourse(e.target.value)}
+                            className="w-full p-2.5 rounded-lg border border-purple-200 bg-white focus:ring-2 focus:ring-purple-400 outline-none text-slate-700 font-medium"
+                          >
+                            <option>OCR A Level PE</option>
+                            <option>Pearson BTEC Sport Level 3</option>
+                            <option>AQA A Level PE</option>
+                            <option>General Anatomy & Physiology</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-extrabold text-purple-900 mb-1">2. What topic do you need to revise?</label>
+                          <input 
+                            type="text"
+                            value={promptTopic}
+                            onChange={(e) => setPromptTopic(e.target.value)}
+                            placeholder="e.g. The Cardiac Cycle, Sliding Filament Theory..."
+                            className="w-full p-2.5 rounded-lg border border-purple-200 bg-white focus:ring-2 focus:ring-purple-400 outline-none text-slate-700 font-medium placeholder:text-slate-400"
+                          />
+                        </div>
+                      </div>
+
+                      <p className="text-sm font-bold text-slate-700 mt-2">
+                        3. Copy this and paste it into your AI:
+                      </p>
+
                       <div className="relative group">
-                        <pre className="bg-slate-100 p-4 rounded-lg text-sm text-slate-700 whitespace-pre-wrap font-mono border border-slate-200">
-                          {PROMPT_TEXT}
+                        <pre className="bg-slate-100 p-4 rounded-lg text-sm text-slate-700 whitespace-pre-wrap font-mono border border-slate-200 h-48 overflow-y-auto custom-scrollbar">
+                          {dynamicPrompt}
                         </pre>
                         <button 
                           onClick={copyToClipboard}
-                          className="absolute top-4 right-4 p-2 bg-white rounded-md shadow border hover:bg-slate-50 transition-colors flex items-center gap-2 text-sm font-medium text-slate-700"
+                          className="absolute top-4 right-4 p-2 bg-white rounded-md shadow border hover:bg-slate-50 transition-colors flex items-center gap-2 text-sm font-medium text-slate-700 z-10"
                         >
                           {copied ? <><Check size={16} className="text-green-500"/> Copied!</> : <><Copy size={16}/> Copy Prompt</>}
                         </button>
