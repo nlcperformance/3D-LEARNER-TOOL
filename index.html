@@ -337,10 +337,13 @@ Crucial Rules:
                             </div>
 
                             {isHidden && (
-                              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-10">
-                                <span className="text-8xl drop-shadow-xl mb-6 transform transition-transform duration-500 hover:scale-110">
+                              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-10 p-4 text-center">
+                                <span className="text-7xl drop-shadow-xl mb-3 transform transition-transform duration-500 hover:scale-110">
                                   {face.icon || '❓'}
                                 </span>
+                                <h3 className="text-2xl font-black text-slate-800 mb-6 drop-shadow-sm leading-tight">
+                                  {face.title}
+                                </h3>
                                 <span className="bg-white/95 text-indigo-700 font-extrabold px-6 py-3 rounded-full shadow-lg border-2 border-indigo-100 backdrop-blur-sm animate-bounce">
                                   Tap to Reveal
                                 </span>
